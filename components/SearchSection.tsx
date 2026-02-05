@@ -20,36 +20,38 @@ const SearchSection: React.FC<SearchSectionProps> = ({ onSearch, status }) => {
 
   return (
     <div className="bg-slate-900 py-16 sm:py-24 relative overflow-hidden">
-        {/* Abstract Background Shapes */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-gold rounded-full blur-3xl"></div>
             <div className="absolute top-1/2 right-0 w-64 h-64 bg-ocean-blue rounded-full blur-3xl"></div>
         </div>
 
       <div className="max-w-4xl mx-auto px-4 relative z-10 text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
-          Find Companies Offering <br className="hidden sm:block" />
+        <div className="inline-flex items-center gap-2 bg-slate-800/50 border border-slate-700 rounded-full px-4 py-1.5 text-xs font-medium text-brand-gold mb-6">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>New: AI-Powered TSS 482 & Skilled Visa Search</span>
+        </div>
+        
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight leading-tight">
+          Your Bridge to <br className="hidden sm:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-yellow-200">
-            Visa Sponsorship Worldwide
+            Australian Sponsorship
           </span>
         </h1>
         <p className="text-slate-300 text-lg mb-8 max-w-2xl mx-auto">
-          Use our AI-powered agent to scrape current listings and find companies actively sponsoring international talent in your target country.
+          Identify companies in Australia and worldwide that actively sponsor international talent. Search by role, industry, or specific visa type.
         </p>
 
         <form onSubmit={handleSubmit} className="relative max-w-2xl mx-auto group">
           <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold to-ocean-blue rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           
           <div className="relative flex flex-col sm:flex-row items-stretch bg-white rounded-xl shadow-2xl p-2 gap-2">
-            
-            {/* Role Input */}
             <div className="flex-1 flex items-center bg-slate-50 sm:bg-transparent rounded-lg sm:rounded-none px-2">
                 <Search className="h-5 w-5 text-slate-400 ml-2" />
                 <input
                 type="text"
                 value={jobQuery}
                 onChange={(e) => setJobQuery(e.target.value)}
-                placeholder="Job title or Industry..."
+                placeholder="Job title (e.g. Registered Nurse)"
                 className="w-full px-3 py-3 text-slate-900 placeholder-slate-400 focus:outline-none text-base bg-transparent"
                 disabled={status === SearchStatus.LOADING}
                 />
@@ -57,7 +59,6 @@ const SearchSection: React.FC<SearchSectionProps> = ({ onSearch, status }) => {
 
             <div className="hidden sm:block w-px bg-slate-200 my-2"></div>
 
-            {/* Country Input */}
             <div className="sm:w-1/3 flex items-center bg-slate-50 sm:bg-transparent rounded-lg sm:rounded-none px-2">
                 <MapPin className="h-5 w-5 text-slate-400 ml-2" />
                 <input
@@ -81,22 +82,19 @@ const SearchSection: React.FC<SearchSectionProps> = ({ onSearch, status }) => {
                   <span className="hidden sm:inline">Searching</span>
                 </>
               ) : (
-                <>
-                  <Sparkles className="h-5 w-5" />
-                  <span>Find</span>
-                </>
+                <span>Search</span>
               )}
             </button>
           </div>
         </form>
         
         <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm text-slate-400">
-          <span>Popular:</span>
+          <span className="font-medium text-slate-500">Quick Searches:</span>
           {[
-              { label: 'Software in USA', job: 'Software Engineering', loc: 'USA' },
-              { label: 'Nursing in UK', job: 'Nursing', loc: 'United Kingdom' },
-              { label: 'Mining in Australia', job: 'Mining', loc: 'Australia' },
-              { label: 'Tech in Germany', job: 'Tech', loc: 'Germany' }
+              { label: 'Mining in AU', job: 'Mining Engineering', loc: 'Australia' },
+              { label: 'Aged Care in AU', job: 'Aged Care Worker', loc: 'Australia' },
+              { label: 'IT in Melbourne', job: 'Software Developer', loc: 'Melbourne, Australia' },
+              { label: 'Chefs in Sydney', job: 'Chef', loc: 'Sydney, Australia' }
           ].map((item) => (
              <button 
                 key={item.label}
@@ -105,7 +103,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({ onSearch, status }) => {
                     setCountry(item.loc);
                     onSearch(item.job, item.loc);
                 }}
-                className="hover:text-brand-gold underline decoration-slate-600 underline-offset-4 hover:decoration-brand-gold transition-all"
+                className="px-3 py-1 bg-slate-800/50 rounded-full border border-slate-700 hover:border-brand-gold hover:text-brand-gold transition-all"
              >
                 {item.label}
              </button>

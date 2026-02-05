@@ -3,35 +3,37 @@ import { SearchResult, Company } from "../types";
 
 export const searchSponsorshipCompanies = async (query: string, country: string): Promise<SearchResult> => {
   try {
-    // Initialize the AI client directly before use as per recommended practice
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    // Using gemini-3-flash-preview for high-performance search and extraction
     const modelId = 'gemini-3-flash-preview';
 
     const prompt = `
-      You are an expert recruitment data analyst specializing in the global job market.
+      You are an expert recruitment data analyst and migration researcher.
       
-      Task: Find a list of companies in "${country}" that are known to offer visa sponsorship to international workers, specifically related to this search query: "${query}".
+      Task: Find a list of companies in "${country}" that are known to offer visa sponsorship to international workers, specifically for the role/industry: "${query}".
+      
+      If the country is Australia, specifically look for companies with a history of sponsoring:
+      - TSS 482 (Temporary Skill Shortage)
+      - 186 ENS (Employer Nomination Scheme)
+      - 494 (Skilled Employer Sponsored Regional)
       
       Requirements:
-      1. Use Google Search to find current, up-to-date information.
-      2. Return the data as a valid JSON array wrapped in a markdown code block (e.g., \`\`\`json [ ... ] \`\`\`).
-      3. If specific companies cannot be confirmed, find recruitment agencies or large multinationals in "${country}" in this sector that typically sponsor.
-      4. Focus on companies offering work visas (e.g., H1B in USA, TSS 482 in Australia, Skilled Worker in UK, Blue Card in EU, etc., depending on the country).
+      1. Use Google Search to find current, up-to-date data for 2024-2025.
+      2. Return the data as a valid JSON array wrapped in a markdown code block.
+      3. Focus on specific company names rather than general advice.
+      4. Include the specific sponsorship visa types commonly used by the company if known.
       
       JSON Structure per item:
       {
-        "id": "unique_string_id",
+        "id": "unique_id",
         "name": "Company Name",
         "industry": "Industry Sector",
-        "website": "Company Website URL (or empty string if not found)",
-        "location": "City/Region in ${country}",
-        "description": "A short summary (max 20 words) of their business and visa sponsorship reputation.",
-        "sponsorshipType": "Type of visa commonly sponsored (e.g. 'Skilled Worker', 'H1B', 'General Sponsorship')"
+        "website": "Direct link to careers page or homepage",
+        "location": "Primary city or HQ in ${country}",
+        "description": "Short summary of their sponsorship reputation (max 25 words).",
+        "sponsorshipType": "Specific visa subclass or general type"
       }
 
-      If you find absolutely no companies, return an empty JSON array.
+      If no structured data is found, provide a detailed summary of the current landscape for "${query}" in "${country}".
     `;
 
     const response = await ai.models.generateContent({
@@ -43,17 +45,13 @@ export const searchSponsorshipCompanies = async (query: string, country: string)
     });
 
     const textResponse = response.text || "";
-    
-    // Extract Grounding Sources (URLs to display in the UI)
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources = groundingChunks
       .map(chunk => chunk.web)
       .filter(web => !!web)
       .map(web => ({ title: web!.title, uri: web!.uri }));
 
-    // Parse JSON from the text response
     let companies: Company[] = [];
-    
     const jsonMatch = textResponse.match(/```json\s*([\s\S]*?)\s*```/) || textResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
     
     if (jsonMatch) {
@@ -61,7 +59,7 @@ export const searchSponsorshipCompanies = async (query: string, country: string)
         const jsonStr = (jsonMatch[1] || jsonMatch[0]).trim();
         companies = JSON.parse(jsonStr);
       } catch (e) {
-        console.error("Failed to parse JSON from Gemini response", e);
+        console.error("JSON parse error", e);
       }
     }
 
@@ -70,9 +68,8 @@ export const searchSponsorshipCompanies = async (query: string, country: string)
       rawText: companies.length === 0 ? textResponse : undefined,
       sources
     };
-
   } catch (error) {
-    console.error("Gemini Search Error:", error);
+    console.error("Gemini Service Error:", error);
     throw error;
   }
 };
