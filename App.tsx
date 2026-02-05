@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import SearchSection from './components/SearchSection';
 import ResultsSection from './components/ResultsSection';
@@ -12,6 +13,27 @@ const App: React.FC = () => {
   const [rawText, setRawText] = useState<string | undefined>(undefined);
   const [currentQuery, setCurrentQuery] = useState('');
   const [currentCountry, setCurrentCountry] = useState('');
+  
+  // Favorites logic
+  const [favorites, setFavorites] = useState<Company[]>(() => {
+    const saved = localStorage.getItem('sponsor_seeker_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sponsor_seeker_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const toggleFavorite = (company: Company) => {
+    setFavorites(prev => {
+      const isFav = prev.some(f => f.id === company.id || (f.name === company.name && f.location === company.location));
+      if (isFav) {
+        return prev.filter(f => !(f.id === company.id || (f.name === company.name && f.location === company.location)));
+      } else {
+        return [...prev, company];
+      }
+    });
+  };
 
   const handleSearch = async (query: string, country: string) => {
     setStatus(SearchStatus.LOADING);
@@ -45,6 +67,8 @@ const App: React.FC = () => {
             rawText={rawText}
             query={currentQuery}
             country={currentCountry}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
         />
       </main>
       

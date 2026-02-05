@@ -1,20 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 import { SearchResult, Company } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-
-// Initialize the client only if the key exists to avoid immediate errors on load if missing (handled in UI)
-const getAiClient = () => {
-  if (!apiKey) throw new Error("API Key is missing");
-  return new GoogleGenAI({ apiKey });
-};
-
 export const searchSponsorshipCompanies = async (query: string, country: string): Promise<SearchResult> => {
   try {
-    const ai = getAiClient();
+    // Initialize the AI client directly before use as per recommended practice
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // We use gemini-2.5-flash for speed and search capability
-    const modelId = 'gemini-2.5-flash';
+    // Using gemini-3-flash-preview for high-performance search and extraction
+    const modelId = 'gemini-3-flash-preview';
 
     const prompt = `
       You are an expert recruitment data analyst specializing in the global job market.
@@ -46,37 +39,35 @@ export const searchSponsorshipCompanies = async (query: string, country: string)
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        // responseMimeType cannot be JSON when using googleSearch, so we ask for a code block in the prompt
       },
     });
 
     const textResponse = response.text || "";
     
-    // Extract Grounding Sources
+    // Extract Grounding Sources (URLs to display in the UI)
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const sources = groundingChunks
       .map(chunk => chunk.web)
-      .filter(web => web !== undefined && web !== null)
-      .map(web => ({ title: web.title, uri: web.uri }));
+      .filter(web => !!web)
+      .map(web => ({ title: web!.title, uri: web!.uri }));
 
     // Parse JSON from the text response
     let companies: Company[] = [];
     
-    // Regex to capture content between ```json and ``` or just [...]
     const jsonMatch = textResponse.match(/```json\s*([\s\S]*?)\s*```/) || textResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
     
     if (jsonMatch) {
       try {
-        companies = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        const jsonStr = (jsonMatch[1] || jsonMatch[0]).trim();
+        companies = JSON.parse(jsonStr);
       } catch (e) {
         console.error("Failed to parse JSON from Gemini response", e);
-        // Fallback: If parsing fails, we might just return empty companies and let the raw text show
       }
     }
 
     return {
       companies,
-      rawText: companies.length === 0 ? textResponse : undefined, // Only pass raw text if structured parsing failed or was empty
+      rawText: companies.length === 0 ? textResponse : undefined,
       sources
     };
 
